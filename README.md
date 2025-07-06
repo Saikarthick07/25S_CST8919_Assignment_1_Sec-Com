@@ -2,89 +2,74 @@
 
 Youtube Demo : https://youtu.be/55-etRc_vak 
 
-## Overview
+# 🔐 CST8919 – Assignment 1: Securing & Monitoring an Authenticated Flask App
 
-You’ve already:
-- Implemented SSO with Auth0 in **Lab 1**
-- Deployed and monitored a Flask app using Azure in **Lab 2**
+## 🧭 Objective
 
-Now, you'll **combine both** to build a production-ready secure app:
-- Deploy your **Auth0-authenticated Flask app** to Azure
-- Add **custom logging** for user activities (logins, protected route access)
-- Use **Azure Monitor + KQL** to detect suspicious activity (e.g., excessive access to protected routes)
-- Create **alerts** based on your queries
+This assignment demonstrates the integration of **authentication**, **logging**, and **monitoring** in a secure Flask application. The goal is to simulate a real-world **DevSecOps scenario** by combining:
 
----
-
-
-## Scenario
-
-You're part of a DevSecOps team for a cloud-based SaaS platform. The app uses SSO (Auth0) and is hosted on Azure. You're tasked with:
-- Monitoring authenticated user activity
-- Detecting and alerting on excessive access to sensitive endpoints (e.g., `/protected`)
-- Demonstrating secure integration between identity and observability systems
+- **Authentication (SSO via Auth0)**  
+- **Deployment to Azure App Service**  
+- **Structured logging of user events**  
+- **Observability through Azure Monitor and KQL-based alerting**
 
 ---
 
-## Tasks
+## 🛠️ Tools & Technologies
 
-### Part 1: App Enhancements & Deployment
-1. **Enhance your Flask App from Lab 1**:
-   - Use your existing Auth0 integration.
-   - Add logging for:
-     - Every login (capture `user_id`, `email`, `timestamp`)
-     - Access to `/protected` route
-     - Any unauthorized attempts
-   - Use `app.logger.info()` or `app.logger.warning()` to emit structured logs.
-
-2. **Deploy to Azure App Service**:
-   - Reuse Azure setup from Lab 2.
-   - Ensure AppServiceConsoleLogs is enabled and logs are sent to Log Analytics.
+| Category           | Tools Used                           |
+|-------------------|--------------------------------------|
+| **Web Framework** | Flask (Python)                       |
+| **Authentication**| Auth0 (OAuth 2.0 / OpenID Connect)   |
+| **Cloud Hosting** | Azure App Service                    |
+| **Logging**        | `app.logger` + Azure Monitor         |
+| **Monitoring**     | Azure Log Analytics (KQL queries)    |
+| **Alerting**       | Azure Alerts + Action Group (Email)  |
+| **Dev Tools**      | VS Code, GitHub, Postman / .http     |
 
 ---
 
-### Part 2: Monitoring & Detection
-1. **Simulate traffic** by accessing the `/protected` route multiple times with valid Auth0 logins.
+## 🔄 Workflow Overview
 
-2. **KQL Query**:
-   - Write a KQL query that identifies:
-     - Any user who accessed `/protected` more than **10 times** in the past **15 minutes**.
-   - Display `user_id`, `timestamp`, and count of accesses.
+### 1. **Authentication Integration**
+- Auth0 is configured to provide secure Single Sign-On (SSO).
+- Successful and failed logins are logged with structured metadata.
 
+### 2. **Logging Critical Events**
+- Custom logs are emitted for:
+  - ✅ Successful and failed logins
+  - ✅ Access to protected endpoints
+  - ❌ Unauthorized access attempts
+- Logs include: username, timestamp, route, and message.
 
+### 3. **Deployment to Azure**
+- The Flask app is deployed to **Azure App Service** using CLI.
+- Azure App Configuration is used to securely store secrets (e.g., Flask session key).
+- Diagnostic logging is enabled and routed to **Log Analytics Workspace**.
 
-3. **Create Azure Alert**:
-   - Trigger alert if **any user** exceeds 10 accesses in 15 minutes.
-   - Send email notification using an **Action Group**.
-   - Alert severity: **3 (Low)**
+### 4. **Monitoring via Azure Monitor + KQL**
+- All structured logs are queryable via **Kusto Query Language (KQL)**.
+- Example monitoring query identifies abnormal access patterns:
 
----
+```kql
+AppServiceConsoleLogs
+| where TimeGenerated > ago(15m)
+| where ResultDescription has "PROTECTED_ACCESS"
+| parse ResultDescription with "PROTECTED_ACCESS: username=" username ", timestamp=" timestamp ", path=" path ", message=" message"
+| summarize access_count = count() by username, bin(TimeGenerated, 5m)
+| where access_count > 10
+```
 
-### Part 3: GitHub Repo + Demo
+### 5. **Automated Alerting**
 
-#### Repo structure:
-- `app.py` or similar main file
-- `requirements.txt`
-- `.env.example` (without secrets)
-- `README.md` with:
-  - Setup steps (Auth0, Azure, .env)
-  - Explanation of logging, detection logic
-  - KQL query and alert logic
-- `test-app.http` file simulating valid and invalid accesses
+- An Azure alert rule is created to trigger when a user accesses /protected more than 10 times in 15 minutes.
+- An email notification is sent via Action Group when the threshold is breached.
 
-#### YouTube Demo (10 min max):
-- App deployed on Azure with working Auth0 login
-- Logging behavior on login and route access
-- Azure Monitor: Run your KQL query
-- Show triggered alert email (if possible)
-- Reflection: What worked, what you'd improve
+### 6.📈 **Outcome**
 
----
+This lab successfully demonstrated:
 
-## 📦 Submission Instructions
-
-Submit the link to your **public GitHub repo** on Brightspace, including the **YouTube demo link** in your `README.md`.
-
-**Due Date**: **Sunday, July 6, 2025 by 11:59 PM**
-
----
+✅ Secure integration of identity provider (Auth0)
+✅ Real-time observability using Azure Monitor
+✅ Automated detection of suspicious activity with KQL
+✅ Actionable alerts through Azure native tools
